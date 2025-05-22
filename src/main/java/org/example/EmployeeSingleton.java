@@ -26,9 +26,9 @@ public class EmployeeSingleton {
 
   // 3. thread safe - avoid creating multiple instances in multi thread env
   public static EmployeeSingleton getInstance() {
-    if (INSTANCE == null) { // first check（无锁） - avoid add lock for each time
+    if (INSTANCE == null) { // first check（no lock） - avoid add lock for each time
       synchronized (EmployeeSingleton.class) { // add lock - synchronized 块：锁定 Employee.class，确保同一时间只有一个线程能执行初始化。
-        if (INSTANCE == null) { // second check（有锁） (avoid multiple creation)
+        if (INSTANCE == null) { // second check（with lock） (avoid multiple creation)
           INSTANCE = new EmployeeSingleton( // safe initialization
               "DefaultFirstName",
               "DefaultLastName",
