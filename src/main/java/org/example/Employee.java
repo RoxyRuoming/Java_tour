@@ -3,6 +3,7 @@ package org.example;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /* 1. Converting to an Immutable Class
 Make the class final so it can't be extended
@@ -65,4 +66,23 @@ public final class Employee { // final - the class can't be extended
     return new ArrayList<>(list);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Employee employee = (Employee) o;
+    return Objects.equals(firstName, employee.firstName) && Objects.equals(
+        lastName, employee.lastName) && Objects.equals(email, employee.email)
+        && Objects.equals(password, employee.password) && Objects.equals(flagged,
+        employee.flagged) && Objects.equals(list, employee.list);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(firstName, lastName, email, password, flagged, list);
+  }
 }
