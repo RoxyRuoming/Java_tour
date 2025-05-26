@@ -1,0 +1,51 @@
+# Cassandra vs. Elasticsearch: Overview
+
+## Apache Cassandra
+
+**Cassandra** is a highly scalable, distributed NoSQL database designed to handle large amounts of data across many commodity servers while providing high availability with no single point of failure.
+
+### Key Features:
+- Peer-to-Peer Architecture**: No master-slave hierarchy, all nodes are equal
+- High Availability**: Automatic data replication with tunable consistency
+- Linear Scalability**: Easily add nodes to increase capacity and throughput
+- Tunable Consistency**: Configurable from eventual to strong consistency
+- Column-Oriented**: Uses a row-based column family data model
+- CQL: Cassandra Query Language (SQL-like syntax)
+
+### Ideal Use Cases:
+- High write-throughput applications
+- Large-scale data storage (IoT, time-series, logs)
+- Multi-datacenter deployments
+- Applications requiring high availability
+
+## Elasticsearch
+
+**Elasticsearch** is a distributed, RESTful search and analytics engine built on Apache Lucene.
+
+### Key Features:
+- Full-Text Search**: Advanced text search and analysis capabilities
+- Near Real-Time**: Data becomes searchable almost immediately
+- Distributed Nature**: Automatic data sharding and replication
+- REST API**: All operations through HTTP endpoints
+- Rich Aggregations**: Powerful analytics and data summarization
+- Schema-Free**: Handles structured and unstructured data
+
+### Ideal Use Cases:
+- Full-text search applications (e-commerce, content platforms)
+- Log and event data analysis
+- Real-time analytics
+- Applications requiring complex aggregations
+
+## Key Differences
+
+Feature            | Cassandra                    | Elasticsearch
+-------------------|------------------------------|-----------------------------
+Primary Purpose    | Highly available data storage| Search and analytics
+Data Model         | Wide-column store            | Document-oriented
+Consistency        | Configurable                 | Eventual consistency
+Query Capabilities | Simple queries (CQL)         | Complex queries (DSL)
+Write Performance  | Extremely high               | High
+Search Capabilities| Limited                      | Very powerful
+Typical Use Cases  | Time-series, messaging       | Log analysis, product search
+
+These technologies can be used together in some architectures, with Cassandra serving as the primary data store and Elasticsearch providing advanced search capabilities.

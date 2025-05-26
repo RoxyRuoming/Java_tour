@@ -1,0 +1,438 @@
+Normalization, Stored procedure, view, material view, trigger
+
+Normalization is the process of organizing data in a database to reduce redundancy and improve data integrity. It involves breaking down larger tables into smaller, related tables and establishing relationships between them. The goal is to eliminate duplicate data and ensure that each piece of information is stored in only one place.
+
+![Screenshot 2025-05-24 at 4.45.44 PM.png](attachment:13e77d18-e0b8-4a6f-86d4-dac90c3c4ea9:Screenshot_2025-05-24_at_4.45.44_PM.png)
+
+## Stored Procedure
+
+A stored procedure is a precompiled collection of SQL statements and optional control-of-flow statements stored in the database. Think of it as a program or function that lives on the database server and can be executed by calling its name.
+
+## Trigger
+
+A trigger is a special type of stored procedure that automatically executes (or "fires") in response to specific database events, such as INSERT, UPDATE, or DELETE operations on a table. Unlike regular stored procedures that you call explicitly, triggers run automatically when their triggering condition occurs.
+
+## View
+
+A view is a virtual table created from the result of a SELECT query. It doesn't store data physically but presents data from one or more underlying tables in a specific format. Views act like windows into your data, showing only what you want users to see.
+
+Views are particularly useful for simplifying complex queries, providing data security by hiding sensitive columns, and creating consistent interfaces for applications. For example, you might create a view that joins customer and order data to show a simplified "CustomerOrderSummary" without exposing internal fields like customer social security numbers or internal pricing codes.
+
+**Materialized View**
+
+A materialized view is a database object that contains the actual results of a query, stored physically on disk rather than computed on-the-fly like a regular view. While a standard view is virtual and executes its underlying query each time it's accessed, a materialized view stores the query results as real data that can be indexed and queried directly.
+Materialized views are particularly valuable for improving performance with complex queries involving joins, aggregations, or calculations that would be expensive to run repeatedly.
+
+examples：
+
+**Normalization**: Shows the transformation from a poorly designed table with multiple violations into properly normalized tables following 3NF principles.
+
+**Stored Procedure**: Creates a reusable procedure that calculates customer order summaries, demonstrating how to encapsulate complex logic on the database server.
+
+**View**: Creates a virtual table that simplifies complex joins, making it easier to query customer order details without writing complex SQL each time.
+
+**Materialized View**: Shows a PostgreSQL example that pre-calculates and stores monthly sales summaries for fast access to aggregated data.
+
+**Trigger**: Includes two trigger examples - one for auditing changes and another for automatically updating inventory when orders are placed.
+
+The code includes sample data at the end so you can test these concepts. Note that syntax may vary slightly between different database systems (MySQL, PostgreSQL, SQL Server, etc.), but the core concepts remain the same across platforms.
+
+```sql
+-- =============================================================================
+-- 1. NORMALIZATION EXAMPLE
+-- =============================================================================
+
+-- BEFORE: Unnormalized table (violates 1NF, 2NF, 3NF)
+CREATE TABLE orders_bad (
+    order_id INT,
+    customer_name VARCHAR(100),
+    customer_city VARCHAR(50),
+    product_names VARCHAR(200),  -- Multiple products in one field
+    product_prices VARCHAR(100), -- Multiple prices in one field
+    quantities VARCHAR(50)       -- Multiple quantities in one field
+);
+
+-- AFTER: Normalized tables (3NF compliant)
+
+-- Customers table
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY,
+    customer_name VARCHAR(100),
+    customer_city VARCHAR(50)
+);
+
+-- Products table
+CREATE TABLE products (
+    product_id INT PRIMARY KEY,
+    product_name VARCHAR(100),
+    product_price DECIMAL(10,2)
+);
+
+-- Orders table
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT,
+    order_date DATE,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
+
+-- Order items table (junction table)
+CREATE TABLE order_items (
+    order_id INT,
+    product_id INT,
+    quantity INT,
+    PRIMARY KEY (order_id, product_id),
+    FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+
+-- =============================================================================
+-- 2. STORED PROCEDURE EXAMPLE
+-- =============================================================================
+
+-- Create a stored procedure to get customer order summary
+DELIMITER //
+CREATE PROCEDURE GetCustomerOrderSummary(IN customer_id INT)
+BEGIN
+    SELECT
+        c.customer_name,
+        COUNT(o.order_id) as total_orders,
+        SUM(oi.quantity * p.product_price) as total_spent
+    FROM customers c
+    LEFT JOIN orders o ON c.customer_id = o.customer_id
+    LEFT JOIN order_items oi ON o.order_id = oi.order_id
+    LEFT JOIN products p ON oi.product_id = p.product_id
+    WHERE c.customer_id = customer_id
+    GROUP BY c.customer_id, c.customer_name;
+END //
+DELIMITER ;
+
+-- Execute the stored procedure
+CALL GetCustomerOrderSummary(1);
+
+-- =============================================================================
+-- 3. VIEW EXAMPLE
+-- =============================================================================
+
+-- Create a view to simplify complex queries
+CREATE VIEW customer_order_details AS
+SELECT
+    c.customer_name,
+    c.customer_city,
+    o.order_id,
+    o.order_date,
+    p.product_name,
+    p.product_price,
+    oi.quantity,
+    (oi.quantity * p.product_price) as line_total
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+JOIN products p ON oi.product_id = p.product_id;
+
+-- Use the view like a regular table
+SELECT * FROM customer_order_details
+WHERE customer_name = 'John Smith';
+
+-- =============================================================================
+-- 4. MATERIALIZED VIEW EXAMPLE
+-- =============================================================================
+
+-- Note: Syntax varies by database system. This is PostgreSQL syntax.
+
+-- Create a materialized view for monthly sales summary
+CREATE MATERIALIZED VIEW monthly_sales_summary AS
+SELECT
+    DATE_TRUNC('month', o.order_date) as sales_month,
+    COUNT(DISTINCT o.order_id) as total_orders,
+    COUNT(DISTINCT o.customer_id) as unique_customers,
+    SUM(oi.quantity * p.product_price) as total_revenue
+FROM orders o
+JOIN order_items oi ON o.order_id = oi.order_id
+JOIN products p ON oi.product_id = p.product_id
+GROUP BY DATE_TRUNC('month', o.order_date)
+ORDER BY sales_month;
+
+-- Query the materialized view (fast, uses stored data)
+SELECT * FROM monthly_sales_summary;
+
+-- Refresh the materialized view to update data
+REFRESH MATERIALIZED VIEW monthly_sales_summary;
+
+-- =============================================================================
+-- 5. TRIGGER EXAMPLE
+-- =============================================================================
+
+-- Create an audit table to track changes
+CREATE TABLE order_audit (
+    audit_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT,
+    action_type VARCHAR(10),
+    old_total DECIMAL(10,2),
+    new_total DECIMAL(10,2),
+    changed_by VARCHAR(100),
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create a trigger that fires after order updates
+DELIMITER //
+CREATE TRIGGER order_update_audit
+AFTER UPDATE ON orders
+FOR EACH ROW
+BEGIN
+    -- Calculate order totals (simplified)
+    DECLARE old_total DECIMAL(10,2);
+    DECLARE new_total DECIMAL(10,2);
+
+    -- Insert audit record
+    INSERT INTO order_audit (order_id, action_type, changed_by)
+    VALUES (NEW.order_id, 'UPDATE', USER());
+END //
+DELIMITER ;
+
+-- Create a trigger to automatically update product inventory
+CREATE TABLE product_inventory (
+    product_id INT PRIMARY KEY,
+    stock_quantity INT,
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+
+DELIMITER //
+CREATE TRIGGER update_inventory_after_order
+AFTER INSERT ON order_items
+FOR EACH ROW
+BEGIN
+    UPDATE product_inventory
+    SET stock_quantity = stock_quantity - NEW.quantity
+    WHERE product_id = NEW.product_id;
+END //
+DELIMITER ;
+
+-- =============================================================================
+-- SAMPLE DATA FOR TESTING
+-- =============================================================================
+
+-- Insert sample data
+INSERT INTO customers VALUES
+(1, 'John Smith', 'New York'),
+(2, 'Jane Doe', 'Los Angeles');
+
+INSERT INTO products VALUES
+(1, 'Laptop', 999.99),
+(2, 'Mouse', 24.99),
+(3, 'Keyboard', 79.99);
+
+INSERT INTO orders VALUES
+(1, 1, '2024-01-15'),
+(2, 2, '2024-01-16');
+
+INSERT INTO order_items VALUES
+(1, 1, 1),  -- Order 1: 1 Laptop
+(1, 2, 2),  -- Order 1: 2 Mice
+(2, 3, 1);  -- Order 2: 1 Keyboard
+
+INSERT INTO product_inventory VALUES
+(1, 50),
+(2, 100),
+(3, 75);
+```
+
+
+------------------- Dirty Read、Non-Repeatable Read、Phantom Read
+These are three classic concurrency problems that can occur when multiple transactions access a database simultaneously. They represent different types of data inconsistencies that can arise without proper isolation controls.
+
+## Dirty Read
+
+A dirty read occurs when one transaction reads data that has been modified by another transaction but not yet committed. The "dirty" data might be rolled back, making the read invalid.
+
+**Example:**
+
+- Transaction A updates a bank account balance from $100 to $150
+- Transaction B reads the balance and sees $150
+- Transaction A rolls back due to an error
+- The actual balance is still $100, but Transaction B made decisions based on $150
+
+This violates data consistency because Transaction B read uncommitted, potentially invalid data.
+
+## Non-Repeatable Read
+
+A non-repeatable read happens when a transaction reads the same data twice and gets different values because another transaction modified and committed the data between the two reads.
+
+**Example:**
+
+- Transaction A reads a product price: $50
+- Transaction B updates the same product price to $60 and commits
+- Transaction A reads the price again and now sees $60
+- Within the same transaction, Transaction A got different values for the same query
+
+This can cause problems when a transaction expects data to remain consistent throughout its execution.
+
+## Phantom Read
+
+A phantom read occurs when a transaction executes the same query twice and gets a different number of rows because another transaction inserted or deleted rows that match the query criteria.
+
+**Example:**
+
+- Transaction A counts all orders for today: finds 10 orders
+- Transaction B inserts a new order for today and commits
+- Transaction A counts orders for today again: now finds 11 orders
+- The "phantom" row appeared between identical queries
+
+This differs from non-repeatable reads because it involves changes to the set of rows rather than modifications to existing rows.
+
+## Prevention
+
+These problems are addressed through different transaction isolation levels:
+
+- **Read Uncommitted**: Allows all three problems
+- **Read Committed**: Prevents dirty reads
+- **Repeatable Read**: Prevents dirty reads and non-repeatable reads
+- **Serializable**: Prevents all three problems
+
+Higher isolation levels provide better consistency but typically reduce concurrency and performance.
+
+----------isolation level
+Database isolation levels define how transactions are isolated from each other and what types of concurrency problems they prevent. Let me explain the standard isolation levels and how different SQL databases implement them.
+
+## Standard SQL Isolation Levels
+
+**1. Read Uncommitted**
+
+- Lowest isolation level
+- Allows dirty reads, non-repeatable reads, and phantom reads
+- Transactions can read uncommitted changes from other transactions
+- Highest concurrency, lowest consistency
+
+**2. Read Committed**
+
+- Prevents dirty reads
+- Still allows non-repeatable reads and phantom reads
+- Only reads committed data
+- Most common default level
+
+**3. Repeatable Read**
+
+- Prevents dirty reads and non-repeatable reads
+- Still allows phantom reads
+- Ensures same data is returned when read multiple times within a transaction
+
+**4. Serializable**
+
+- Highest isolation level
+- Prevents all concurrency problems
+- Transactions execute as if they were run sequentially
+- Lowest concurrency, highest consistency
+
+## Database-Specific Implementations
+
+### MySQL (InnoDB)
+
+**Default:** Repeatable Read
+
+**Unique characteristics:**
+
+- Uses gap locking in Repeatable Read to prevent phantom reads (unlike standard SQL)
+- Supports all four standard levels
+- Read Committed uses row-level locking
+- Serializable uses table-level locking for SELECT statements
+
+```sql
+-- MySQL syntax
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+```
+
+### PostgreSQL
+
+**Default:** Read Committed
+
+**Unique characteristics:**
+
+- No "true" Read Uncommitted - behaves like Read Committed
+- Repeatable Read is implemented as Snapshot Isolation
+- Serializable uses Serializable Snapshot Isolation (SSI)
+- May throw serialization errors that require transaction retry
+
+```sql
+-- PostgreSQL syntax
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+```
+
+### SQL Server
+
+**Default:** Read Committed
+
+**Unique characteristics:**
+
+- Offers Read Committed Snapshot Isolation (RCSI)
+- Snapshot Isolation level (similar to PostgreSQL's Repeatable Read)
+- Uses row versioning for some isolation levels
+- Supports WITH (NOLOCK) hint for read uncommitted behavior
+
+```sql
+-- SQL Server syntax
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT;
+ALTER DATABASE MyDB SET READ_COMMITTED_SNAPSHOT ON;
+
+```
+
+### Oracle
+
+**Default:** Read Committed
+
+**Unique characteristics:**
+
+- Only supports Read Committed and Serializable
+- No Read Uncommitted or Repeatable Read
+- Uses multiversion concurrency control (MVCC)
+- Serializable is implemented as snapshot isolation
+
+```sql
+-- Oracle syntax
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+ALTER SESSION SET ISOLATION_LEVEL = READ COMMITTED;
+
+```
+
+### SQLite
+
+**Default:** Serializable (effectively)
+
+**Unique characteristics:**
+
+- Much simpler model due to file-based nature
+- WAL mode allows concurrent readers with one writer
+- Traditional mode uses database-level locking
+- No explicit isolation level settings
+
+Database     | Default          | Read Uncommitted      | Repeatable Read       | Phantom Prevention
+-------------|------------------|-----------------------|-----------------------|-------------------
+MySQL        | Repeatable Read  | Supported             | Gap locking           | Yes (in RR)
+PostgreSQL   | Read Committed   | Acts like RC          | Snapshot isolation    | Yes (in RR)
+SQL Server   | Read Committed   | Supported             | Via Snapshot          | Configurable
+Oracle       | Read Committed   | Not supported         | Not supported         | N/A
+SQLite       | Serializable     | Not applicable        | Not configurable      | Yes
+
+## Practical Considerations
+
+**Performance Impact:**
+
+- Higher isolation = more locking = lower concurrency
+- MVCC systems (PostgreSQL, Oracle) handle this better than locking systems
+
+**Application Design:**
+
+- Most applications work fine with Read Committed
+- Use higher levels only when consistency is critical
+- Consider optimistic locking for better performance
+
+**Deadlock Prevention:**
+
+- Higher isolation levels increase deadlock risk
+- Implement proper retry logic
+- Keep transactions short
+
+The choice of isolation level should balance your application's consistency requirements with performance needs. Most modern databases default to Read Committed as a reasonable compromise between consistency and performance.

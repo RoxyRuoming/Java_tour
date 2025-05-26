@@ -1,0 +1,428 @@
+I'll provide short answers in both English and Chinese along with simple code examples for each of the topics in your to-do list.
+
+## Stream API Practice
+
+**English:**
+
+The Stream API in Java is a functional-style API for processing sequences of elements. It enables declarative operations on collections, such as filtering, mapping, and reduction, without modifying the original data source.
+
+
+
+```java
+import java.util.Arrays;
+import java.util.List;
+
+public class StreamExample {
+    public static void main(String[] args) {
+        List<String> names = Arrays.asList("John", "Jane", "Adam", "Mary");
+
+        // Using Stream API to filter names starting with 'J' and convert to uppercase
+        names.stream()
+             .filter(name -> name.startsWith("J"))
+             .map(String::toUpperCase)
+             .forEach(System.out::println);
+    }
+}
+
+```
+
+## What is Thread
+
+**English:**
+
+A thread is the smallest unit of execution within a process. It allows multiple operations to run concurrently within the same program, sharing the process's resources but executing independently.
+
+
+
+```java
+public class ThreadExample {
+    public static void main(String[] args) {
+        Thread thread = new Thread(() -> {
+            System.out.println("Running in a separate thread: " +
+                               Thread.currentThread().getName());
+        });
+
+        thread.start();
+        System.out.println("Main thread continues: " +
+                           Thread.currentThread().getName());
+    }
+}
+
+```
+
+## Thread vs Process
+
+**English:**
+
+A process is an independent program with its own memory space, while threads are units of execution within a process that share the same memory space. Processes are isolated, while threads can communicate through shared memory.
+
+
+```java
+public class ThreadVsProcess {
+    public static void main(String[] args) throws Exception {
+        // Creating a new process
+        ProcessBuilder processBuilder = new ProcessBuilder("notepad.exe");
+        Process process = processBuilder.start();
+
+        // Creating a new thread
+        Thread thread = new Thread(() -> {
+            System.out.println("This is a thread within the JVM process");
+        });
+        thread.start();
+
+        System.out.println("Process ID: " + process.pid());
+        System.out.println("Thread ID: " + thread.getId());
+    }
+}
+
+```
+
+## Thread Creation (Thread vs Runnable vs Callable)
+
+**English:**
+
+There are three main ways to create threads in Java: extending the Thread class, implementing the Runnable interface, or implementing the Callable interface when a return value is needed.
+
+exception?
+
+```java
+import java.util.concurrent.*;
+
+public class ThreadCreationExample {
+    public static void main(String[] args) throws Exception {
+        // Method 1: Extending Thread
+        Thread thread1 = new MyThread();
+
+        // Method 2: Implementing Runnable
+        Thread thread2 = new Thread(new MyRunnable());
+
+        // Method 3: Using Callable with ExecutorService
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<String> future = executor.submit(new MyCallable());
+
+        thread1.start();
+        thread2.start();
+
+        System.out.println("Callable result: " + future.get());
+        executor.shutdown();
+    }
+
+    static class MyThread extends Thread {
+        @Override
+        public void run() {
+            System.out.println("Thread created by extending Thread");
+        }
+    }
+
+    static class MyRunnable implements Runnable {
+        @Override
+        public void run() {
+            System.out.println("Thread created with Runnable");
+        }
+    }
+
+    static class MyCallable implements Callable<String> {
+        @Override
+        public String call() {
+            return "Thread created with Callable";
+        }
+    }
+}
+
+```
+
+## Thread Lifecycle
+
+**English:**
+
+A thread goes through various states in its lifecycle: New, Runnable, Blocked, Waiting, Timed Waiting, and Terminated. Each state represents different execution conditions.
+
+
+```java
+public class ThreadLifecycleExample {
+    public static void main(String[] args) throws InterruptedException {
+        Thread thread = new Thread(() -> {
+            try {
+                // Runnable state when executing
+                System.out.println("Thread is running");
+
+                // Timed Waiting state
+                Thread.sleep(1000);
+
+                // Back to Runnable
+                System.out.println("Thread is running again");
+
+                // Waiting state
+                synchronized (ThreadLifecycleExample.class) {
+                    ThreadLifecycleExample.class.wait(500);
+                }
+            } catch (InterruptedException e) {
+                System.out.println("Thread interrupted");
+            }
+            // After completion, thread will be Terminated
+        });
+
+        // New state
+        System.out.println("Thread state when new: " + thread.getState());
+
+        thread.start();
+        System.out.println("Thread state after start: " + thread.getState());
+
+        Thread.sleep(2000);
+        // Terminated state
+        System.out.println("Thread state after execution: " + thread.getState());
+    }
+}
+
+```
+
+## Thread Pool
+
+**English:**
+
+A thread pool manages a collection of worker threads, reusing them to execute tasks and reducing the overhead of thread creation. It's implemented using the ExecutorService interface in Java.
+
+
+```java
+import java.util.concurrent.*;
+
+public class ThreadPoolExample {
+    public static void main(String[] args) {
+        // Creating a fixed thread pool with 3 threads
+        ExecutorService executor = Executors.newFixedThreadPool(3);
+
+        // Submit tasks to the thread pool
+        for (int i = 0; i < 5; i++) {
+            final int taskId = i;
+            executor.submit(() -> {
+                System.out.println("Task " + taskId + " executed by " +
+                                   Thread.currentThread().getName());
+            });
+        }
+
+        // Shutdown the executor when done
+        executor.shutdown();
+    }
+}
+
+```
+
+## Thread Control (wait, sleep, notify, notifyAll)
+
+**English:**
+
+Thread control mechanisms allow coordination between threads. `wait()` suspends a thread until notified, `sleep()` pauses a thread for a specified time, `notify()` wakes up a single waiting thread, and `notifyAll()` wakes up all waiting threads.
+
+
+```java
+public class ThreadControlExample {
+    private static final Object lock = new Object();
+    private static boolean isDataReady = false;
+
+    public static void main(String[] args) {
+        Thread consumer = new Thread(() -> {
+            synchronized (lock) {
+                while (!isDataReady) {
+                    try {
+                        System.out.println("Consumer waiting for data...");
+                        lock.wait(); // Wait until notified
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                System.out.println("Consumer processed the data");
+            }
+        });
+
+        Thread producer = new Thread(() -> {
+            try {
+                Thread.sleep(2000); // Sleep for 2 seconds
+
+                synchronized (lock) {
+                    isDataReady = true;
+                    System.out.println("Producer prepared the data");
+                    lock.notify(); // Notify waiting thread
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+
+        consumer.start();
+        producer.start();
+    }
+}
+
+```
+
+## Thread Safety (synchronized, Lock interface)
+
+**English:**
+
+Thread safety ensures correct program behavior when multiple threads access shared resources. The `synchronized` keyword and `Lock` interface provide mechanisms to control thread access to critical sections.
+
+
+```java
+import java.util.concurrent.locks.*;
+
+public class ThreadSafetyExample {
+    private int syncCounter = 0;
+    private int lockCounter = 0;
+    private final Lock lock = new ReentrantLock();
+
+    public static void main(String[] args) throws InterruptedException {
+        ThreadSafetyExample example = new ThreadSafetyExample();
+        example.demonstrateThreadSafety();
+    }
+
+    public void demonstrateThreadSafety() throws InterruptedException {
+        Thread t1 = new Thread(this::incrementCounters);
+        Thread t2 = new Thread(this::incrementCounters);
+
+        t1.start();
+        t2.start();
+
+        t1.join();
+        t2.join();
+
+        System.out.println("Synchronized Counter: " + syncCounter);
+        System.out.println("Lock Counter: " + lockCounter);
+    }
+
+    private void incrementCounters() {
+        for (int i = 0; i < 1000; i++) {
+            incrementSynchronized();
+            incrementWithLock();
+        }
+    }
+
+    // Using synchronized
+    private synchronized void incrementSynchronized() {
+        syncCounter++;
+    }
+
+    // Using Lock interface
+    private void incrementWithLock() {
+        lock.lock();
+        try {
+            lockCounter++;
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+
+```
+
+## CAS (Compare-And-Swap) - Non-locking Mechanism
+
+**English:**
+
+Compare-And-Swap (CAS) is a non-blocking synchronization technique that atomically updates a value only if it matches an expected value, avoiding locks and improving performance in concurrent environments.
+
+
+```java
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class CASExample {
+    public static void main(String[] args) throws InterruptedException {
+        // Traditional counter (not thread-safe)
+        Counter traditionalCounter = new Counter();
+
+        // Atomic counter using CAS
+        AtomicCounter atomicCounter = new AtomicCounter();
+
+        // Create threads to increment counters
+        Runnable task = () -> {
+            for (int i = 0; i < 1000; i++) {
+                traditionalCounter.increment();
+                atomicCounter.increment();
+            }
+        };
+
+        Thread t1 = new Thread(task);
+        Thread t2 = new Thread(task);
+
+        t1.start();
+        t2.start();
+
+        t1.join();
+        t2.join();
+
+        System.out.println("Traditional Counter: " + traditionalCounter.getValue());
+        System.out.println("Atomic Counter: " + atomicCounter.getValue());
+    }
+
+    static class Counter {
+        private int value = 0;
+
+        public void increment() {
+            value++;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
+
+    static class AtomicCounter {
+        private AtomicInteger value = new AtomicInteger(0);
+
+        public void increment() {
+            // CAS operation - keep trying until successful
+            int current;
+            do {
+                current = value.get();
+            } while (!value.compareAndSet(current, current + 1));
+
+            // Simplified version: value.incrementAndGet();
+        }
+
+        public int getValue() {
+            return value.get();
+        }
+    }
+}
+
+```
+
+## Volatile Keyword
+
+**English:**
+
+The `volatile` keyword ensures that a variable is always read from and written to main memory, providing visibility between threads but not atomicity. It prevents compiler optimizations that could cause thread-safety issues.
+
+
+```java
+public class VolatileExample {
+    // Without volatile, this flag might be cached by threads
+    private static volatile boolean flag = false;
+
+    public static void main(String[] args) throws InterruptedException {
+        Thread writerThread = new Thread(() -> {
+            try {
+                Thread.sleep(1000);
+                System.out.println("Changing flag to true");
+                flag = true; // This change is guaranteed to be visible to reader thread
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+
+        Thread readerThread = new Thread(() -> {
+            while (!flag) {
+                // Busy-wait until flag becomes true
+                // Without volatile, this might run forever due to caching
+            }
+            System.out.println("Flag is now true, reader thread detected the change");
+        });
+
+        readerThread.start();
+        writerThread.start();
+
+        writerThread.join();
+        readerThread.join();
+    }
+}
+
+```
