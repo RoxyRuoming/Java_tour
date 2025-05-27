@@ -1,4 +1,4 @@
-package com.example;
+package org.example;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -6,10 +6,17 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 
-public class SqlRunner {
+public class SqlRunnerJDBC {
   public static void main(String[] args) throws Exception {
     // 1. connect h2 database
-    Connection conn = DriverManager.getConnection("jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1", "sa", "");
+//    Connection conn = DriverManager.getConnection("jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1", "sa", "");
+
+    // postgres connection
+    Connection conn = DriverManager.getConnection(
+        "jdbc:postgresql://localhost:5432/postgres",
+        "admin",
+        "admin123"  // 替换为你的实际密码
+    );
 
     Statement stmt = conn.createStatement();
 
