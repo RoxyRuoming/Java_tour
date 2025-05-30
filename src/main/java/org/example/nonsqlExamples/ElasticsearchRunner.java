@@ -1,4 +1,4 @@
-package org.example;
+package org.example.nonsqlExamples;
 
 import java.io.*;
 import java.util.ArrayList;

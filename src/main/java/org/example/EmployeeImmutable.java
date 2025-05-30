@@ -12,7 +12,7 @@ Remove all setters
 Return defensive copies of mutable objects (like the List)
 Ensure proper construction
  */
-public final class Employee { // final - the class can't be extended
+public final class EmployeeImmutable { // final - the class can't be extended
 
   private final String firstName; // make all fields private and final
   private final String lastName;
@@ -21,7 +21,7 @@ public final class Employee { // final - the class can't be extended
   private final Boolean flagged;
   private final List<Integer> list;
 
-  public Employee(String firstName, String lastName, String email, Integer password,
+  public EmployeeImmutable(String firstName, String lastName, String email, Integer password,
       Boolean flagged,
       List<Integer> list) {
     this.firstName = firstName;
@@ -74,7 +74,7 @@ public final class Employee { // final - the class can't be extended
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Employee employee = (Employee) o;
+    EmployeeImmutable employee = (EmployeeImmutable) o;
     return Objects.equals(firstName, employee.firstName) && Objects.equals(
         lastName, employee.lastName) && Objects.equals(email, employee.email)
         && Objects.equals(password, employee.password) && Objects.equals(flagged,

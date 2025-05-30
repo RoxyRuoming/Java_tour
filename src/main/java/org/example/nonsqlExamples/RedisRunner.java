@@ -1,4 +1,4 @@
-package org.example;
+package org.example.nonsqlExamples;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -106,7 +106,7 @@ public class RedisRunner {
    */
   private static boolean testConnection() {
     System.out.println("🔗 测试Redis连接...");
-    return executeRedisCommand("PING");
+    return executeRedisCommand("PING"); // command design pattern
   }
 
   /**
@@ -122,7 +122,7 @@ public class RedisRunner {
       cmd.add("docker");
       cmd.add("exec");
       cmd.add(CONTAINER_NAME);
-      cmd.add("redis-cli");
+      cmd.add("redis-cli"); //
       cmd.add("-n");
       cmd.add(REDIS_DB);
 

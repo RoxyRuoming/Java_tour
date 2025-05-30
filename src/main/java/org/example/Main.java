@@ -13,7 +13,7 @@ public class Main {
     // Demonstrate Employee immutability
     System.out.println("===== Employee Immutability Demo =====");
     List<Integer> numbers = new ArrayList<>(Arrays.asList(1, 2, 3));
-    Employee employee = new Employee("John", "Doe", "john@example.com", 12345, false, numbers);
+    EmployeeImmutable employee = new EmployeeImmutable("John", "Doe", "john@example.com", 12345, false, numbers);
 
     // Try to modify the original list
     numbers.add(4);

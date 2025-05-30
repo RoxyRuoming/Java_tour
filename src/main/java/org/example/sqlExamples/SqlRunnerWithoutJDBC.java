@@ -1,4 +1,4 @@
-package org.example;
+package org.example.sqlExamples;
 
 import java.io.*;
 import java.nio.file.Files;
