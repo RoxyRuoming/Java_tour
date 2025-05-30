@@ -1,3 +1,4 @@
+-- schema.sql
 -- create database tables
 -- drop table if it exists (reset)
 DROP TABLE IF EXISTS orders;
@@ -15,7 +16,7 @@ CREATE TABLE students (
                           age INT,
                           grade CHAR(1),
                           enrollment_date DATE,
-                          gpa DECIMAL(3,2)
+                          gpa DECIMAL(3,2) -- exception?
 );
 
 -- Create Products table

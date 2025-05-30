@@ -1,3 +1,4 @@
+-- practice-queries.sql
 -- basic select queries
 SELECT * FROM students;
 SELECT first_name, last_name, grade FROM students;
@@ -7,7 +8,7 @@ SELECT * FROM students WHERE gpa BETWEEN 3.0 and 3.5;
 
 -- sort and limit
 SELECT * FROM students ORDER BY gpa DESC;
-SELECT * FROM students ORDER BY gpa DESC LIMIT 3; -- top 3
+SELECT * FROM students ORDER BY gpa DESC LIMIT 3; -- top 3 offset? function? avoid - subqueries double max - O(n*n)?
 SELECT * FROM students ORDER BY last_name ASC; -- by last name alphabetically
 
 -- aggregation
@@ -18,7 +19,7 @@ SELECT grade, COUNT(*) as student_count FROM students group by grade; -- Count s
 SELECT grade, AVG(gpa) as avg_gpa FROM students GROUP BY grade; -- Average GPA by grade
 
 -- string functions and pattern matching
-SELECT * FROM students WHERE first_name LIKE 'A%';
+SELECT * FROM students WHERE first_name LIKE 'A%'; --
 SELECT * FROM students WHERE last_name LIKE '%son%';
 SELECT CONCAT(first_name, ' ', last_name) as full_name FROM students;
 
@@ -34,10 +35,11 @@ SELECT o.order_id, o.order_date, o.total_amount,
        c.first_name, c.last_name, c.email
 FROM orders o
          JOIN customers c ON o.customer_id = c.customer_id;
+ -- left/right join?
 
 -- Employee interview question
 -- Classic interview query: count employees per department
-SELECT department, COUNT(*) AS headcount
+SELECT department, COUNT(*) AS headcount -- 为何不可以直接插入id？
 FROM employees
 GROUP BY department
 ORDER BY department;
