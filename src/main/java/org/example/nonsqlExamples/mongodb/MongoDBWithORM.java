@@ -33,10 +33,10 @@ public class MongoDBWithORM {
 
   private static boolean initializeMorphia() {
     try {
-      // 1. 创建 MongoClient
+      // 1. create MongoClient
       MongoClient mongoClient = MongoClients.create(CONNECTION_STRING);
 
-      // 2. 初始化 Morphia 并映射实体类
+      // 2. initialize Morphia  and create objects
       datastore = Morphia.createDatastore(mongoClient, DATABASE_NAME);
 
       // 映射实体类（包括嵌套类）
@@ -66,7 +66,7 @@ public class MongoDBWithORM {
       // 2. 查询所有博客
       System.out.println("\n📝 所有博客文章:");
       List<MongoBlogPost> posts = datastore.find(MongoBlogPost.class).iterator().toList();
-      posts.forEach(p -> System.out.println("- " + p.getTitle() + " (" + p.getStatus() + ")"));
+      posts.forEach(p -> System.out.println("- " + p.getTitle() + " (" + p.getStatus() + ")")); // lambda
 
       // 3. 详细查看博客内容
       System.out.println("\n📖 博客详细信息:");
@@ -83,7 +83,7 @@ public class MongoDBWithORM {
 
       // 4. 条件查询（含Java标签的文章）
       System.out.println("\n🔍 Java相关文章:");
-      List<MongoBlogPost> javaPosts = datastore.find(MongoBlogPost.class)
+      List<MongoBlogPost> javaPosts = datastore.find(MongoBlogPost.class) // what happens in mongoDB: db.collection.find({ tags: { $in: ["Java"] } })
           .filter(Filters.in("tags", Arrays.asList("Java")))
           .iterator().toList();
       javaPosts.forEach(p -> System.out.println("- " + p.getTitle()));
@@ -128,7 +128,7 @@ public class MongoDBWithORM {
       String choice = scanner.nextLine().trim();
 
       switch (choice) {
-        case "1" -> viewAllPosts();
+        case "1" -> viewAllPosts(); // 使用Java 14+的箭头语法(->)简化switch语句
         case "2" -> addNewPost();
         case "3" -> searchByTag();
         case "4" -> searchByAuthor();

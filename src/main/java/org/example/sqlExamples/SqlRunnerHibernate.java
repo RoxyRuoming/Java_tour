@@ -19,7 +19,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public class SqlRunnerHibernate { // using Hibernate with Postgres
-  private static SessionFactory sessionFactory; // Hibernate的"重量级"对象，应用启动时创建一次
+  private static SessionFactory sessionFactory; // Hibernate的"重量级"对象，应用启动时创建一次， singleton
 
   public static void main(String[] args) throws Exception {
     // 1. Initialize Hibernate SessionFactory
@@ -40,6 +40,16 @@ public class SqlRunnerHibernate { // using Hibernate with Postgres
       System.out.println("\n=== Hibernate Transaction Practice ===");
       transactionPractice();
 
+      // 6. Join query examples
+      System.out.println("\n=== Hibernate Join Query Examples ===");
+      demonstrateInnerJoin(session);
+      demonstrateLeftJoin(session);
+
+      // 7. trigger and stored procedure examples
+      System.out.println("\n=== Hibernate Trigger and Stored Procedure Examples ===");
+      demonstrateTrigger(session);
+      demonstrateStoredProcedure(session);
+
     } finally {
       // Close SessionFactory
       if (sessionFactory != null) {
@@ -48,7 +58,7 @@ public class SqlRunnerHibernate { // using Hibernate with Postgres
     }
   }
 
-  private static void initializeHibernate() {
+  private static void initializeHibernate() { // 这部分逻辑也可以单独放到文件hibernate.cfg.xml里面
     try {
       // Create configuration
       Configuration configuration = new Configuration();
@@ -246,6 +256,172 @@ public class SqlRunnerHibernate { // using Hibernate with Postgres
       }
     } finally {
       session.close();
+    }
+  }
+
+  /**
+   * 演示使用Hibernate进行Inner Join 查询
+   * 这是一个内连接(INNER JOIN)，只会返回Order有对应Customer的记录
+   * 返回结果中： 每行代表一个订单及其关联的客户信息。如果一个客户有多个订单，该客户会出现在多行中。
+   */
+  private static void demonstrateInnerJoin(Session session) {
+    System.out.println("=== 演示Hibernate Inner Join查询 ===");
+
+    try {
+      // 使用HQL显式join语法 - 最直观的inner join示例
+      String hql = "SELECT c.customerId, c.firstName, c.lastName, " +
+          "o.orderId, o.orderDate, o.totalAmount " +
+          "FROM Order o " +
+          "JOIN o.customer c";
+
+      Query<Object[]> query = session.createQuery(hql, Object[].class);
+      List<Object[]> results = query.getResultList();
+
+      System.out.println("客户ID | 客户名 | 订单ID | 订单日期 | 订单金额");
+      System.out.println("--------------------------------------------");
+
+      if (results.isEmpty()) {
+        System.out.println("没有找到匹配的数据");
+      } else {
+        for (Object[] row : results) {
+          System.out.printf("%d | %s %s | %d | %s | %.2f%n",
+              row[0], row[1], row[2], row[3], row[4], row[5]);
+        }
+      }
+
+      // 原生SQL实现相同的inner join
+      System.out.println("\n使用原生SQL:");
+      String nativeSql = "SELECT c.customer_id, c.first_name, c.last_name, " +
+          "o.order_id, o.order_date, o.total_amount " +
+          "FROM orders o " +
+          "INNER JOIN customers c ON o.customer_id = c.customer_id";
+
+      Query<Object[]> nativeQuery = session.createNativeQuery(nativeSql);
+      List<Object[]> nativeResults = nativeQuery.getResultList();
+
+      if (!nativeResults.isEmpty()) {
+        System.out.println("原生SQL结果数量: " + nativeResults.size());
+      }
+    } catch (Exception e) {
+      System.err.println("执行Inner Join查询时出错: " + e.getMessage());
+    }
+  }
+
+  /**
+   * 演示使用Hibernate进行Left Join查询
+   * LEFT JOIN方法中的额外处理主要是针对null值的处理：
+   */
+  private static void demonstrateLeftJoin(Session session) {
+    System.out.println("\n=== 演示Hibernate Left Join查询 ===");
+
+    try {
+      // HQL实现left join
+      String hql = "SELECT c.customerId, c.firstName, c.lastName, " +
+          "o.orderId, o.orderDate, o.totalAmount " +
+          "FROM Customer c " +
+          "LEFT JOIN Order o ON c.customerId = o.customer.customerId";
+
+      Query<Object[]> query = session.createQuery(hql, Object[].class); // Query<Object[]> - 泛型Query对象
+      List<Object[]> results = query.getResultList();
+
+      System.out.println("客户ID | 客户名 | 订单ID | 订单日期 | 订单金额");
+      System.out.println("--------------------------------------------");
+
+      if (results.isEmpty()) {
+        System.out.println("没有找到匹配的数据");
+      } else {
+        for (Object[] row : results) {
+          // 简洁处理null值
+          Integer orderId = (Integer)row[3];
+          String orderIdStr = orderId != null ? orderId.toString() : "NULL";
+
+          LocalDate orderDate = (LocalDate)row[4];
+          String dateStr = orderDate != null ? orderDate.toString() : "NULL";
+
+          BigDecimal amount = (BigDecimal)row[5];
+          String amountStr = amount != null ? amount.toString() : "NULL";
+
+          // %s %s将firstName和lastName（对应row[1]和row[2]）合并为一个显示列
+          System.out.printf("%d | %s %s | %s | %s | %s%n", //
+              row[0], row[1], row[2], orderIdStr, dateStr, amountStr);
+        }
+
+        // 统计没有订单的客户数量，这是LEFT JOIN特有的，因为只有LEFT JOIN才会包含没有关联订单的客户
+        long customersWithoutOrders = results.stream()
+            .filter(row -> row[3] == null)
+            .count();
+
+        System.out.println("\n没有订单的客户数量: " + customersWithoutOrders);
+      }
+    } catch (Exception e) {
+      System.err.println("执行Left Join查询时出错: " + e.getMessage());
+    }
+  }
+
+
+  // trigger and stored procedure
+  /**
+   * 演示触发器的基本用法
+   * 这个方法展示如何通过Hibernate操作触发数据库触发器
+   */
+  private static void demonstrateTrigger(Session session) {
+    System.out.println("\n=== 简单触发器演示 ===");
+    Transaction tx = session.beginTransaction();
+
+    try {
+      // 插入新学生，这会自动触发触发器
+      Student newStudent = new Student(20, "Trigger", "Test", "trigger.test@email.com",
+          21, "B", LocalDate.now(), new BigDecimal("3.50"));
+      session.save(newStudent);
+      tx.commit();
+
+      // 查询审计表，验证触发器已执行
+      String sql = "SELECT * FROM students_audit WHERE student_id = 20";
+      List<Object[]> results = session.createNativeQuery(sql).getResultList();
+
+      if (!results.isEmpty()) {
+        Object[] row = results.get(0);
+        System.out.println("触发器执行确认: ");
+        System.out.println("操作: " + row[1] + ", 学生ID: " + row[2] + ", 时间: " + row[3]);
+      } else {
+        System.out.println("触发器似乎没有执行");
+      }
+    } catch (Exception e) {
+      tx.rollback();
+      System.err.println("触发器演示失败: " + e.getMessage());
+    }
+  }
+
+  /**
+   * 演示存储过程和函数的基本用法
+   * 这个方法展示如何通过Hibernate调用数据库存储过程和函数
+   */
+  private static void demonstrateStoredProcedure(Session session) {
+    System.out.println("\n=== 简单存储过程演示 ===");
+
+    try {
+      // 1. 调用存储过程
+      Transaction tx = session.beginTransaction();
+      Query<?> procQuery = session.createNativeQuery("CALL update_student_grade(?, ?)");
+      procQuery.setParameter(1, 1); // 使用位置参数
+      procQuery.setParameter(2, "A");
+      procQuery.executeUpdate();
+      tx.commit();
+      System.out.println("存储过程已执行: 已将学生ID=1的成绩更新为A");
+
+      // 2. 调用存储函数 - 使用位置参数
+      String funcSql = "SELECT * FROM get_students_by_grade(?)";
+      Query<Object[]> funcQuery = session.createNativeQuery(funcSql); // createNativeQuery允许执行原生的SQL查询（而不是Hibernate的HQL查询语言）。
+      funcQuery.setParameter(1, "A"); // 使用位置参数
+      List<Object[]> results = funcQuery.getResultList();
+
+      System.out.println("\n调用存储函数结果 (等级为A的学生):");
+      for (Object[] row : results) {
+        System.out.printf("ID: %s, 姓名: %s, 等级: %s%n", row[0], row[1], row[2]);
+      }
+    } catch (Exception e) {
+      System.err.println("存储过程演示失败: " + e.getMessage());
+      e.printStackTrace(); // 打印完整堆栈以便调试
     }
   }
 }

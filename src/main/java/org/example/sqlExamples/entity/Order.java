@@ -20,6 +20,9 @@ public class Order {
   @Column(name = "order_id")
   private Integer orderId;
 
+  // 定义了Order和Customer之间的多对一关系。Customer实体本身没有反向引用（即没有定义一对多关系到Order）
+  // fetch = FetchType.LAZY 指定加载策略为懒加载，是hibernate lazy loading 的一种实现方式
+  // 意味着当加载Order对象时，不会立即加载关联的Customer对象，只有在实际访问customer属性时才会加载
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "customer_id")
   private Customer customer;

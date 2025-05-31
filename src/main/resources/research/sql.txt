@@ -10,7 +10,8 @@ A stored procedure is a precompiled collection of SQL statements and optional co
 
 ## Trigger
 
-A trigger is a special type of stored procedure that automatically executes (or "fires") in response to specific database events, such as INSERT, UPDATE, or DELETE operations on a table. Unlike regular stored procedures that you call explicitly, triggers run automatically when their triggering condition occurs.
+A trigger is a database object that automatically executes an associated function or procedure in response to specific database events, such as data modifications.
+Unlike regular stored procedures that you call explicitly, triggers run automatically when their triggering condition occurs.
 
 ## View
 

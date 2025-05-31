@@ -3,6 +3,6 @@
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/src/main/resources/sql/data.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/src/main/resources/sql/practice-queries.sql" dialect="H2" />
-    <file url="file://$PROJECT_DIR$/src/main/resources/sql/schema.sql" dialect="H2" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/sql/schema.sql" dialect="PostgreSQL" />
   </component>
 </project>
