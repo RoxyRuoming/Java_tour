@@ -89,8 +89,8 @@
 //    System.out.println("🔗 Testing MongoDB connection...");
 //    return executeMongoCommand("db.runCommand({ping: 1})");
 //  }
-//
-//  private static boolean executeMongoCommand(String command) {
+//  // process builder - Java中启动外部程序的工具
+//  private static boolean executeMongoCommand(String command) { // 通过Docker执行MongoDB Shell (mongosh)命令
 //    try {
 //      List<String> cmd = new ArrayList<>();
 //      cmd.add("docker");

@@ -7,11 +7,11 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-@Entity("blog_posts")
+@Entity("blog_posts") // mapping to a collection in mongoDB - Morphia will do it
 public class MongoBlogPost {
 
-  @Id
-  private ObjectId id;
+  @Id // field
+  private ObjectId id; // objectId - unique value
 
   @Property("title")
   private String title;
@@ -35,6 +35,7 @@ public class MongoBlogPost {
   private LocalDateTime updatedAt;
 
   // 无参构造函数（Morphia 必需）
+  // Morphia要求所有实体类都必须有一个无参构造函数，用于从MongoDB文档反序列化到Java对象
   public MongoBlogPost() {}
 
   // 构造函数
@@ -85,7 +86,7 @@ public class MongoBlogPost {
     }
   }
 
-  // 静态工厂方法创建示例数据
+  // 静态工厂方法创建示例数据 - Static Factory Method
   public static MongoBlogPost createSampleBlogPost() {
     Author author = new Author(
         "张三",
@@ -121,7 +122,7 @@ public class MongoBlogPost {
   public String getStatus() { return status; }
   public void setStatus(String status) { this.status = status; }
 
-  public LocalDateTime getCreatedAt() { return createdAt; }
+  public LocalDateTime getCreatedAt() { return createdAt; } // java 8 -  LocalDateTime
   public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
   public LocalDateTime getUpdatedAt() { return updatedAt; }
