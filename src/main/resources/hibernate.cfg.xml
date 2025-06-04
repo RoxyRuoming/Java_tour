@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC
+  "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+  "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+  <session-factory>
+    <!-- 数据库连接设置 -->
+    <property name="connection.driver_class">org.postgresql.Driver</property>
+    <property name="connection.url">jdbc:postgresql://localhost:5432/mydb</property>
+    <property name="connection.username">admin</property>
+    <property name="connection.password">admin123</property>
+
+    <!-- JDBC 连接池大小 -->
+    <property name="connection.pool_size">1</property>
+
+    <!-- SQL 方言 -->
+    <property name="dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+
+    <!-- 显示执行的 SQL 语句 -->
+    <property name="show_sql">true</property>
+
+    <!-- 自动更新数据库 schema -->
+    <property name="hbm2ddl.auto">update</property>
+
+    <!-- 实体类映射 -->
+    <mapping class="org.example.model.Student"/>
+  </session-factory>
+</hibernate-configuration>

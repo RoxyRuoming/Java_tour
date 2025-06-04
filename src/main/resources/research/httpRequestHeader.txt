@@ -1,0 +1,40 @@
+# HTTP Request Headers
+
+HTTP request headers are key-value pairs sent by a client to a server that provide additional information about the request being made. These headers help the server understand how to process the request appropriately.
+
+## Common HTTP Request Headers
+
+The most frequently used HTTP request headers include:
+
+### Content and Format Headers
+- **Accept**: Indicates which content types the client can understand (e.g., `Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8`)
+- **Accept-Encoding**: Specifies which encoding methods the client supports (e.g., `Accept-Encoding: gzip, deflate, br`)
+- **Accept-Language**: Indicates the preferred languages for the response (e.g., `Accept-Language: en-US,en;q=0.9,es;q=0.8`)
+- **Content-Type**: Specifies the media type of the request body (e.g., `Content-Type: application/json`)
+- **Content-Length**: Indicates the size of the request body in bytes
+
+### Authentication and Security
+- **Authorization**: Contains credentials for authenticating the client with the server (e.g., `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`)
+- **Cookie**: Contains stored HTTP cookies previously sent by the server (e.g., `Cookie: sessionId=abc123; user=john`)
+
+### Caching and Conditional Requests
+- **Cache-Control**: Specifies caching directives (e.g., `Cache-Control: no-cache`)
+- **If-Modified-Since**: Makes the request conditional based on modification date (e.g., `If-Modified-Since: Wed, 21 Oct 2015 07:28:00 GMT`)
+- **If-None-Match**: Makes the request conditional using ETags (e.g., `If-None-Match: "737060cd8c284d8af7ad3082f209582d"`)
+
+### Connection Management
+- **Connection**: Controls whether the network connection stays open after the current transaction finishes (e.g., `Connection: keep-alive`)
+- **Keep-Alive**: Controls how long a persistent connection should stay open (e.g., `Keep-Alive: timeout=5, max=1000`)
+
+### Request Context
+- **Host**: Specifies the domain name of the server (e.g., `Host: www.example.com`)
+- **Referer**: Indicates the address of the previous web page (e.g., `Referer: https://www.google.com/`)
+- **User-Agent**: Contains information about the client making the request (e.g., `User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...`)
+- **Origin**: Indicates where a fetch originates from (e.g., `Origin: https://example.com`)
+
+### Other Important Headers
+- **X-Requested-With**: Often used to identify AJAX requests (e.g., `X-Requested-With: XMLHttpRequest`)
+- **Upgrade-Insecure-Requests**: Requests that the server upgrade from HTTP to HTTPS
+- **Forwarded/X-Forwarded-For**: Identifies the originating IP address of a client connecting through a proxy
+
+These headers help facilitate the complex interaction between clients and servers on the web, allowing for content negotiation, caching, authentication, and many other features that make the modern web work efficiently.
