@@ -17,7 +17,14 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
-// 使用Servlet接口实现的版本
+// 使用Servlet接口实现的版本 - less abstract, more code, more manual implementation
+
+/***
+ * main differences between Servlet and HttpServlet:
+ * 1. need to implement methods of Servlet interface: init(), service(), destroy(). getServletConfig(), getServletInfo()
+ * 2. 手动handle requests， routes requests(to different method handlers, like doPost) manage Servlet life cycle, handle unsupported http methods
+ * -- doGet, doPost, doPut, doDelete 方法内部/业务逻辑几乎一致
+ */
 @WebServlet("/pure-students")
 public class PureServletStudent implements Servlet {
   private ServletConfig config;
@@ -33,6 +40,8 @@ public class PureServletStudent implements Servlet {
     return config;
   }
 
+  // 请求分发
+  // manually cast req -> httpReq
   @Override
   public void service(ServletRequest req, ServletResponse resp)
       throws ServletException, IOException {
@@ -55,7 +64,7 @@ public class PureServletStudent implements Servlet {
         doDelete(httpReq, httpResp);
         break;
       default:
-        httpResp.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+        httpResp.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED); // return 405
         httpResp.getWriter().println("<!-- 这是Servlet接口实现 -->");
         break;
     }
@@ -63,7 +72,7 @@ public class PureServletStudent implements Servlet {
 
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    Session session = HibernateUtil.getSessionFactory().openSession();
+    Session session = HibernateUtil.getSessionFactory().openSession(); // open hibernate session
     List<Student> students = session.createQuery("from Student", Student.class).list();
     session.close();
 
@@ -95,7 +104,7 @@ public class PureServletStudent implements Servlet {
     tx.commit();
     session.close();
 
-    resp.setStatus(HttpServletResponse.SC_CREATED);
+    resp.setStatus(HttpServletResponse.SC_CREATED); // status code 201
     resp.getWriter().println("<!-- 这是Servlet接口实现 -->");
   }
 
@@ -114,9 +123,9 @@ public class PureServletStudent implements Servlet {
       student.setAge(age);
       session.merge(student);
       tx.commit();
-      resp.setStatus(HttpServletResponse.SC_OK);
+      resp.setStatus(HttpServletResponse.SC_OK); // status code 200
     } else {
-      resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+      resp.setStatus(HttpServletResponse.SC_NOT_FOUND); // status code 404
     }
     session.close();
     resp.getWriter().println("<!-- 这是Servlet接口实现 -->");
