@@ -1,109 +1,124 @@
 package com.example.springDemo.controller;
 
-import com.example.springDemo.dto.StudentDTO;
 import com.example.springDemo.model.Student;
 import com.example.springDemo.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/students")
 public class StudentController {
 
-  private final StudentService studentService;
+  private final StudentService postgresStudentService;
+  private final StudentService mysqlStudentService;
 
   @Autowired
-  public StudentController(StudentService studentService) {
-    this.studentService = studentService;
+  public StudentController(
+      @Qualifier("postgresStudentService") StudentService postgresStudentService,
+      @Qualifier("mysqlStudentService") StudentService mysqlStudentService) {
+    this.postgresStudentService = postgresStudentService;
+    this.mysqlStudentService = mysqlStudentService;
   }
 
-  // 转换单个 Student 到 StudentDTO
-  private StudentDTO convertToDTO(Student student) {
-    return new StudentDTO(student.getId(), student.getName(), student.getAge());
+  @GetMapping("/postgres")
+  public ResponseEntity<List<Student>> getAllPostgresStudents() {
+    return ResponseEntity.ok(postgresStudentService.getAllStudents());
   }
 
-  // 转换 Student 列表到 StudentDTO 列表
-  private List<StudentDTO> convertToDTOList(List<Student> students) {
-    return students.stream()
-        .map(this::convertToDTO)
-        .collect(Collectors.toList());
+  @GetMapping("/mysql")
+  public ResponseEntity<List<Student>> getAllMysqlStudents() {
+    return ResponseEntity.ok(mysqlStudentService.getAllStudents());
   }
 
-  @GetMapping
-  public ResponseEntity<List<StudentDTO>> getAllStudents() {
-    List<Student> students = studentService.getAllStudents();
-    return ResponseEntity.ok(convertToDTOList(students));
-  }
-
-  @GetMapping("/{id}")
-  public ResponseEntity<StudentDTO> getStudentById(@PathVariable Long id) {
-    return studentService.getStudentById(id)
-        .map(student -> ResponseEntity.ok(convertToDTO(student)))
+  @GetMapping("/postgres/{id}")
+  public ResponseEntity<Student> getPostgresStudentById(@PathVariable Long id) {
+    return postgresStudentService.getStudentById(id)
+        .map(ResponseEntity::ok)
         .orElse(ResponseEntity.notFound().build());
   }
 
-  @PostMapping
-  public ResponseEntity<StudentDTO> createStudent(@RequestBody Student student) {
-    Student savedStudent = studentService.saveStudent(student);
-    return new ResponseEntity<>(convertToDTO(savedStudent), HttpStatus.CREATED);
+  @GetMapping("/mysql/{id}")
+  public ResponseEntity<Student> getMysqlStudentById(@PathVariable Long id) {
+    return mysqlStudentService.getStudentById(id)
+        .map(ResponseEntity::ok)
+        .orElse(ResponseEntity.notFound().build());
   }
 
-  @PutMapping("/{id}")
-  public ResponseEntity<StudentDTO> updateStudent(@PathVariable Long id, @RequestBody Student student) {
-    return studentService.getStudentById(id)
-        .map(existingStudent -> {
-          // 保留敏感信息
-          if (student.getSsn() == null) {
-            student.setSsn(existingStudent.getSsn());
-          }
-          if (student.getBirth() == null) {
-            student.setBirth(existingStudent.getBirth());
-          }
-          if (student.getCreditCardNumber() == null) {
-            student.setCreditCardNumber(existingStudent.getCreditCardNumber());
-          }
+  /**
+   * POST: http://localhost:8080/api/students/mysql
+   * test data:
+   * {
+   *   "name": "alice",
+   *   "age": 22,
+   *   "ssn": "123-45-6789",
+   *   "birth": "2000-01-01",
+   *   "creditCardNumber": "4111-1111-1111-1111"
+   * }
+   *
+   */
+  @PostMapping("/mysql")
+  public ResponseEntity<Student> createMysqlStudent(@RequestBody Student student) {
+    return new ResponseEntity<>(mysqlStudentService.saveStudent(student), HttpStatus.CREATED);
+  }
 
+  @PostMapping("/postgres")
+  public ResponseEntity<Student> createPostgresStudent(@RequestBody Student student) {
+    return new ResponseEntity<>(postgresStudentService.saveStudent(student), HttpStatus.CREATED);
+  }
+
+  @PutMapping("/mysql/{id}")
+  public ResponseEntity<Student> updateMysqlStudent(@PathVariable Long id, @RequestBody Student student) {
+    return mysqlStudentService.getStudentById(id)
+        .map(existingStudent -> {
           student.setId(id);
-          Student updatedStudent = studentService.saveStudent(student);
-          return ResponseEntity.ok(convertToDTO(updatedStudent));
+          return ResponseEntity.ok(mysqlStudentService.saveStudent(student));
         })
         .orElse(ResponseEntity.notFound().build());
   }
 
-  @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deleteStudent(@PathVariable Long id) {
-    return studentService.getStudentById(id)
+  @PutMapping("/postgres/{id}")
+  public ResponseEntity<Student> updatePostgresStudent(@PathVariable Long id, @RequestBody Student student) {
+    return postgresStudentService.getStudentById(id)
+        .map(existingStudent -> {
+          student.setId(id);
+          return ResponseEntity.ok(postgresStudentService.saveStudent(student));
+        })
+        .orElse(ResponseEntity.notFound().build());
+  }
+
+  @DeleteMapping("/mysql/{id}")
+  public ResponseEntity<Void> deleteMysqlStudent(@PathVariable Long id) {
+    return mysqlStudentService.getStudentById(id)
         .map(student -> {
-          studentService.deleteStudent(id);
+          mysqlStudentService.deleteStudent(id);
           return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
         })
         .orElse(ResponseEntity.notFound().build());
   }
 
-  @GetMapping("/search")
-  public ResponseEntity<List<StudentDTO>> searchStudents(
-      @RequestParam(required = false) String name,
-      @RequestParam(required = false) Integer minAge) {
-
-    List<Student> students;
-    if (name != null) {
-      students = studentService.findStudentsByName(name);
-    } else if (minAge != null) {
-      students = studentService.findStudentsOlderThan(minAge);
-    } else {
-      students = studentService.getAllStudents();
-    }
-
-    return ResponseEntity.ok(convertToDTOList(students));
+  @DeleteMapping("/postgres/{id}")
+  public ResponseEntity<Void> deletePostgresStudent(@PathVariable Long id) {
+    return postgresStudentService.getStudentById(id)
+        .map(student -> {
+          postgresStudentService.deleteStudent(id);
+          return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+        })
+        .orElse(ResponseEntity.notFound().build());
   }
 
-  @GetMapping("/test-exception")
-  public ResponseEntity<StudentDTO> testException() {
-    throw new RuntimeException("This is a test exception for AOP logging");
+  // 示例：根据数据源参数动态选择服务
+  @GetMapping
+  public ResponseEntity<List<Student>> getAllStudents(
+      @RequestParam(name = "source", defaultValue = "postgres") String source) {
+    if ("mysql".equalsIgnoreCase(source)) {
+      return ResponseEntity.ok(mysqlStudentService.getAllStudents());
+    } else {
+      return ResponseEntity.ok(postgresStudentService.getAllStudents());
+    }
   }
 }
