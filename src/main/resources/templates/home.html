@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Home</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+    }
+    .user-info {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+    }
+    .features {
+      margin-top: 30px;
+    }
+    .features ul {
+      padding-left: 20px;
+    }
+    .features li {
+      margin-bottom: 10px;
+    }
+    .features a {
+      color: #4285f4;
+      text-decoration: none;
+    }
+    .features a:hover {
+      text-decoration: underline;
+    }
+    .logout-btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #f44336;
+      color: white;
+      text-decoration: none;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div th:if="${name != null}" class="user-info">
+    <h1>Welcome, <span th:text="${name}">User</span>!</h1>
+    <p>Your email: <span th:text="${email}">email@example.com</span></p>
+  </div>
+  <div th:unless="${name != null}">
+    <h1>Welcome!</h1>
+    <p>Please <a th:href="@{/login}">login</a> to view your personal information.</p>
+  </div>
+
+  <div class="features">
+    <h2>Application Features:</h2>
+    <ul>
+      <li><a th:href="@{/api/students/postgres}">View PostgreSQL Students List</a></li>
+      <li><a th:href="@{/api/students/mysql}">View MySQL Students List</a></li>
+    </ul>
+  </div>
+
+  <form th:action="@{/logout}" method="post">
+    <button type="submit" class="logout-btn">Logout</button>
+  </form>
+</div>
+</body>
+</html>

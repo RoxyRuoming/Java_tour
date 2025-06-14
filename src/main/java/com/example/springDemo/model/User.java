@@ -15,8 +15,18 @@ public class User {
   @Column(unique = true, nullable = false)
   private String username;
 
-  @Column(nullable = false)
+  // 修改密码字段，允许为空 - 这样github第三方登录的时候才可以通过
+  @Column(nullable = true)  // 改为允许为空
   private String password;
+
+  @Column(unique = true)
+  private String email;
+
+  private String name;
+
+  private String provider; // google, github, etc.
+
+  private String providerId; // ID from the provider
 
   @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
@@ -24,14 +34,7 @@ public class User {
   @Column(name = "role")
   private Set<Role> roles = new HashSet<>();
 
-  // 默认构造函数
   public User() {
-  }
-
-  // 带参数的构造函数
-  public User(String username, String password) {
-    this.username = username;
-    this.password = password;
   }
 
   // Getters and Setters
@@ -59,6 +62,38 @@ public class User {
     this.password = password;
   }
 
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public String getProvider() {
+    return provider;
+  }
+
+  public void setProvider(String provider) {
+    this.provider = provider;
+  }
+
+  public String getProviderId() {
+    return providerId;
+  }
+
+  public void setProviderId(String providerId) {
+    this.providerId = providerId;
+  }
+
   public Set<Role> getRoles() {
     return roles;
   }
@@ -67,7 +102,6 @@ public class User {
     this.roles = roles;
   }
 
-  // 添加角色
   public void addRole(Role role) {
     this.roles.add(role);
   }
